@@ -3,441 +3,648 @@ import pickle
 import pandas as pd
 import plotly.express as px
 import sqlite3
-import re
 from datetime import datetime
 
-# Database setup
-conn = sqlite3.connect('threat_logs.db', check_same_thread=False)
+# =====================================
+# DATABASE
+# =====================================
+
+conn = sqlite3.connect("threat_logs.db", check_same_thread=False)
 c = conn.cursor()
 
-c.execute('''
+c.execute("""
 CREATE TABLE IF NOT EXISTS logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    sender TEXT,
-    receiver TEXT,
-    subject TEXT,
-    threat_level TEXT,
-    spam_probability REAL,
+    scan_type TEXT,
+    result TEXT,
+    score REAL,
     timestamp TEXT
 )
-''')
+""")
 
 conn.commit()
 
-# Load trained AI model
+# =====================================
+# LOAD MODEL
+# =====================================
+
 model = pickle.load(open("spam_model.pkl", "rb"))
 
-# Page config
+# =====================================
+# PAGE CONFIG
+# =====================================
+
 st.set_page_config(
     page_title="Spam Email Classifier",
-    page_icon="🛡️",
+    page_icon="📧",
     layout="wide"
 )
 
-# Custom CSS
+# =====================================
+# PREMIUM LIGHT UI
+# =====================================
+
 st.markdown("""
 <style>
 
-.stApp {
-    background: linear-gradient(to right, #020617, #0f172a);
-    color: white;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
 }
 
+/* MAIN APP */
+
+.stApp {
+    background-color: #f5f7fb;
+    color: #111827;
+}
+
+/* SIDEBAR */
+
+section[data-testid="stSidebar"] {
+    background-color: #ffffff;
+    border-right: 1px solid #e5e7eb;
+}
+
+/* SIDEBAR TEXT */
+
+section[data-testid="stSidebar"] * {
+    color: #111827 !important;
+}
+
+/* TITLES */
+
 .main-title {
-    font-size: 60px;
-    font-weight: 800;
-    color: #38bdf8;
-    text-align: center;
+    font-size: 42px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 5px;
 }
 
 .sub-title {
-    text-align: center;
-    color: #cbd5e1;
-    font-size: 20px;
-    margin-bottom: 40px;
+    font-size: 16px;
+    color: #6b7280;
+    margin-bottom: 30px;
 }
 
-.metric-card {
-    background: #111827;
-    padding: 25px;
-    border-radius: 18px;
-    text-align: center;
-    border: 1px solid #1e293b;
-    box-shadow: 0 0 20px rgba(56,189,248,0.1);
+/* CARDS */
+
+.card {
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    padding: 22px;
+    border-radius: 14px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-.high-risk {
-    background-color: #dc2626;
-    padding: 25px;
-    border-radius: 15px;
-    text-align: center;
-    font-size: 30px;
-    font-weight: bold;
-    color: white;
+.card h2 {
+    color: #111827;
+    font-size: 28px;
+    margin-bottom: 5px;
 }
 
-.safe-risk {
-    background-color: #16a34a;
+.card p {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+/* RESULT BOXES */
+
+.safe-box {
+    background-color: #ecfdf5;
+    border: 1px solid #10b981;
     padding: 25px;
-    border-radius: 15px;
+    border-radius: 12px;
+    color: #065f46;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.spam-box {
+    background-color: #fef2f2;
+    border: 1px solid #ef4444;
+    padding: 25px;
+    border-radius: 12px;
+    color: #991b1b;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+/* NORMAL BUTTONS */
+
+div.stButton > button {
+    background-color: #2563eb;
+    color: white !important;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 500;
+    font-size: 15px;
+    width: 100%;
+}
+
+div.stButton > button:hover {
+    background-color: #1d4ed8;
+}
+
+/* DOWNLOAD BUTTON */
+
+div.stDownloadButton > button {
+    background-color: white !important;
+    color: black !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 500;
+}
+
+div.stDownloadButton > button:hover {
+    background-color: #f3f4f6 !important;
+}
+
+/* FILE UPLOADER */
+
+[data-testid="stFileUploader"] {
+    background-color: #111827 !important;
+    border: 2px dashed #374151 !important;
+    padding: 20px !important;
+    border-radius: 12px !important;
+}
+
+/* ALL TEXT INSIDE */
+
+[data-testid="stFileUploader"] * {
+    color: white !important;
+}
+
+/* ACTUAL BUTTON */
+
+[data-testid="stFileUploader"] section button,
+[data-testid="stFileUploader"] button {
+    background: white !important;
+    color: black !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    padding: 10px 18px !important;
+}
+
+/* BUTTON TEXT */
+
+[data-testid="stFileUploader"] button p {
+    color: black !important;
+}
+
+/* ICON */
+
+[data-testid="stFileUploader"] button svg {
+    fill: black !important;
+}
+
+/* INPUT LABELS */
+
+label {
+    color: #111827 !important;
+    font-weight: 500 !important;
+}
+
+/* INPUT BOXES */
+
+div[data-testid="stTextInput"] input {
+    background-color: white !important;
+    color: #111827 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+div[data-testid="stTextArea"] textarea {
+    background-color: white !important;
+    color: #111827 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+/* TABLES */
+
+[data-testid="stDataFrame"] {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+/* FOOTER */
+
+.footer {
     text-align: center;
-    font-size: 30px;
-    font-weight: bold;
-    color: white;
+    color: #6b7280;
+    margin-top: 40px;
+    font-size: 14px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# Sidebar
-st.sidebar.markdown("# 🛡️ Spam Email Classifier")
-st.sidebar.markdown("### AI Spam Detection Dashboard")
+# =====================================
+# SIDEBAR
+# =====================================
+
+st.sidebar.markdown("## 📧 Spam Email Classifier")
+st.sidebar.caption("Enterprise AI Dashboard")
 
 page = st.sidebar.radio(
     "Navigation",
     [
-        "🏠 Dashboard",
-        "🔍 Threat Scanner",
-        "📊 Analytics",
-        "📜 Threat Logs",
-        "ℹ️ About System"
+        "Dashboard",
+        "Single Email Scanner",
+        "Bulk Email Scanner",
+        "Analytics",
+        "Threat Logs",
+        "About System"
     ]
 )
 
 st.sidebar.markdown("---")
 
-st.sidebar.metric("AI Accuracy", "96.23%")
-st.sidebar.metric("Threat Engine", "ACTIVE")
-st.sidebar.metric("Detection Status", "LIVE")
+st.sidebar.metric("Model Accuracy", "96.23%")
+st.sidebar.metric("Threat Engine", "Active")
+st.sidebar.metric("Status", "Live")
 
-# DASHBOARD PAGE
-if page == "🏠 Dashboard":
+# =====================================
+# DASHBOARD
+# =====================================
+
+if page == "Dashboard":
 
     st.markdown(
-        '<div class="main-title">🛡️ Spam Email Classifier</div>',
+        '<div class="main-title">Spam Email Classifier</div>',
         unsafe_allow_html=True
     )
 
     st.markdown(
-        '<div class="sub-title">Advanced AI-Powered Spam Email Detection System using Machine Learning & NLP</div>',
+        '<div class="sub-title">AI-powered email spam detection system using Machine Learning and NLP</div>',
         unsafe_allow_html=True
     )
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         st.markdown(
-            '<div class="metric-card"><h2>96.23%</h2><p>Detection Accuracy</p></div>',
+            '<div class="card"><h2>96.23%</h2><p>Detection Accuracy</p></div>',
             unsafe_allow_html=True
         )
 
     with col2:
         st.markdown(
-            '<div class="metric-card"><h2>24/7</h2><p>Threat Monitoring</p></div>',
+            '<div class="card"><h2>24/7</h2><p>Threat Monitoring</p></div>',
             unsafe_allow_html=True
         )
 
     with col3:
         st.markdown(
-            '<div class="metric-card"><h2>AI + NLP</h2><p>Detection Engine</p></div>',
+            '<div class="card"><h2>AI + NLP</h2><p>Detection Engine</p></div>',
             unsafe_allow_html=True
         )
 
-    with col4:
-        st.markdown(
-            '<div class="metric-card"><h2>LIVE</h2><p>Threat Detection</p></div>',
-            unsafe_allow_html=True
+    st.subheader("Recent Threat Activity")
+
+    try:
+
+        recent_logs = pd.read_sql_query(
+            "SELECT scan_type, result, score AS Percentage, timestamp FROM logs ORDER BY id DESC LIMIT 5",
+            conn
         )
 
-    st.write("")
+        recent_logs["Percentage"] = recent_logs["Percentage"].astype(str) + "%"
 
-    st.subheader("🚨 Live Threat Feed")
+        st.dataframe(
+            recent_logs,
+            use_container_width=True
+        )
 
-    feed_data = pd.DataFrame({
-        "Time": ["12:45", "12:41", "12:35", "12:28"],
-        "Threat": [
-            "Phishing URL",
-            "Lottery Scam",
-            "Credential Harvesting",
-            "Fake Banking Alert"
-        ],
-        "Severity": ["High", "Medium", "High", "Critical"]
-    })
+    except:
+        st.warning("No recent activity found.")
 
-    st.dataframe(feed_data, use_container_width=True)
+# =====================================
+# SINGLE EMAIL SCANNER
+# =====================================
 
-    st.write("")
+elif page == "Single Email Scanner":
 
-    chart_data = pd.DataFrame({
-        "Threat Type": ["Phishing", "Lottery", "Promotion", "Safe"],
-        "Count": [35, 22, 15, 48]
+    st.title("Single Email Scanner")
+
+    sender = st.text_input("Sender Email")
+
+    subject = st.text_input("Email Subject")
+
+    message = st.text_area(
+        "Email Content",
+        height=250
+    )
+
+    analyze = st.button("Analyze Email")
+
+    if analyze:
+
+        full_message = sender + " " + subject + " " + message
+
+        prediction = model.predict([full_message])[0]
+
+        probabilities = model.predict_proba([full_message])[0]
+
+        spam_probability = round(probabilities[1] * 100, 2)
+        safe_probability = round(probabilities[0] * 100, 2)
+
+        result = "Spam" if prediction == 1 else "Safe"
+
+        c.execute(
+            "INSERT INTO logs (scan_type, result, score, timestamp) VALUES (?, ?, ?, ?)",
+            (
+                "Single Email",
+                result,
+                spam_probability,
+                datetime.now().strftime('%d-%m-%Y %H:%M:%S')
+            )
+        )
+
+        conn.commit()
+
+        if prediction == 1:
+
+            st.markdown(
+                f'<div class="spam-box">Spam Email Detected<br><br>Threat Percentage: {spam_probability}%</div>',
+                unsafe_allow_html=True
+            )
+
+        else:
+
+            st.markdown(
+                f'<div class="safe-box">Safe Email Detected<br><br>Safety Percentage: {safe_probability}%</div>',
+                unsafe_allow_html=True
+            )
+
+# =====================================
+# BULK EMAIL SCANNER
+# =====================================
+
+elif page == "Bulk Email Scanner":
+
+    st.title("Bulk Email Scanner")
+
+    st.write(
+        "Upload CSV file to analyze multiple emails using AI."
+    )
+
+    uploaded_csv = st.file_uploader(
+        "Upload CSV File",
+        type=["csv"]
+    )
+
+    if uploaded_csv is not None:
+
+        try:
+
+            df = pd.read_csv(uploaded_csv, encoding="latin-1")
+
+            df.columns = df.columns.str.strip().str.lower()
+
+            st.subheader("Uploaded Data")
+
+            st.dataframe(df.head(), use_container_width=True)
+
+            if "text" in df.columns:
+                email_column = "text"
+
+            elif "email" in df.columns:
+                email_column = "email"
+
+            elif "message" in df.columns:
+                email_column = "message"
+
+            elif "v2" in df.columns:
+                email_column = "v2"
+
+            else:
+                email_column = df.columns[0]
+
+            st.success(f"Using column: {email_column}")
+
+            analyze_bulk = st.button(
+                "Analyze Bulk Emails"
+            )
+
+            if analyze_bulk:
+
+                predictions = model.predict(
+                    df[email_column].astype(str)
+                )
+
+                probabilities = model.predict_proba(
+                    df[email_column].astype(str)
+                )
+
+                df["Prediction"] = [
+                    "Spam" if pred == 1 else "Safe"
+                    for pred in predictions
+                ]
+
+                df["Threat Percentage"] = [
+                    str(round(prob[1] * 100, 2)) + "%"
+                    for prob in probabilities
+                ]
+
+                st.subheader("Bulk Scan Results")
+
+                st.dataframe(df, use_container_width=True)
+
+                spam_count = len(
+                    df[df["Prediction"] == "Spam"]
+                )
+
+                safe_count = len(
+                    df[df["Prediction"] == "Safe"]
+                )
+
+                total = len(df)
+
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    st.metric("Total Emails", total)
+
+                with col2:
+                    st.metric("Spam Emails", spam_count)
+
+                with col3:
+                    st.metric("Safe Emails", safe_count)
+
+                chart_df = pd.DataFrame({
+                    "Category": ["Spam", "Safe"],
+                    "Count": [spam_count, safe_count]
+                })
+
+                fig = px.pie(
+                    chart_df,
+                    values="Count",
+                    names="Category"
+                )
+
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True
+                )
+
+                csv = df.to_csv(
+                    index=False
+                ).encode("utf-8")
+
+                st.download_button(
+                    label="Download Report",
+                    data=csv,
+                    file_name="bulk_email_report.csv",
+                    mime="text/csv"
+                )
+
+                bulk_percentage = round(
+                    (spam_count / total) * 100,
+                    2
+                )
+
+                c.execute(
+                    "INSERT INTO logs (scan_type, result, score, timestamp) VALUES (?, ?, ?, ?)",
+                    (
+                        "Bulk Email",
+                        f"{spam_count} Spam / {safe_count} Safe",
+                        bulk_percentage,
+                        datetime.now().strftime('%d-%m-%Y %H:%M:%S')
+                    )
+                )
+
+                conn.commit()
+
+        except Exception as e:
+            st.error(f"Error reading CSV: {e}")
+
+# =====================================
+# ANALYTICS
+# =====================================
+
+elif page == "Analytics":
+
+    st.title("Security Analytics")
+
+    logs_df = pd.read_sql_query(
+        "SELECT * FROM logs",
+        conn
+    )
+
+    spam_total = 0
+    safe_total = 0
+
+    for value in logs_df["result"].astype(str):
+
+        if "Spam" in value:
+            spam_total += 1
+
+        if "Safe" in value:
+            safe_total += 1
+
+    analytics_data = pd.DataFrame({
+        "Category": ["Spam", "Safe"],
+        "Count": [spam_total, safe_total]
     })
 
     fig = px.pie(
-        chart_data,
-        values='Count',
-        names='Threat Type',
-        title='Threat Distribution'
+        analytics_data,
+        values="Count",
+        names="Category"
     )
 
     st.plotly_chart(fig, use_container_width=True)
 
-# THREAT SCANNER PAGE
-elif page == "🔍 Threat Scanner":
+    col1, col2 = st.columns(2)
 
-    st.title("🔍 AI Threat Scanner")
+    with col1:
+        st.metric("Spam Detected", spam_total)
 
-    left, right = st.columns([2, 1])
+    with col2:
+        st.metric("Safe Emails", safe_total)
 
-    with left:
+# =====================================
+# THREAT LOGS
+# =====================================
 
-        sender = st.text_input("📧 Sender Email")
+elif page == "Threat Logs":
 
-        receiver = st.text_input("📨 Receiver Email")
+    st.title("Threat Logs")
 
-        subject = st.text_input("📌 Email Subject")
+    try:
 
-        message = st.text_area(
-            "📝 Email Content",
-            height=250,
-            placeholder="Paste suspicious email content here..."
+        logs_df = pd.read_sql_query(
+            "SELECT id, scan_type, result, score AS Percentage, timestamp FROM logs ORDER BY id DESC",
+            conn
         )
 
-        uploaded_file = st.file_uploader(
-            "📂 Upload Email File",
-            type=["txt"]
-        )
+        logs_df["Percentage"] = logs_df["Percentage"].astype(str) + "%"
 
-        if uploaded_file:
-            file_content = uploaded_file.read().decode("utf-8")
-            message = file_content
-            st.success("✅ File uploaded successfully")
+        st.dataframe(logs_df, use_container_width=True)
 
-        analyze = st.button(
-            "🚀 Run AI Threat Analysis",
-            use_container_width=True
-        )
+    except:
+        st.warning("No logs available.")
 
-    with right:
+# =====================================
+# ABOUT
+# =====================================
 
-        st.subheader("⚠️ Threat Indicators")
+elif page == "About System":
 
-        suspicious_keywords = [
-            "win",
-            "free",
-            "money",
-            "urgent",
-            "click",
-            "verify",
-            "bank",
-            "password",
-            "bonus",
-            "offer",
-            "lottery",
-            "claim"
+    st.title("About Spam Email Classifier")
+
+    st.write("""
+    Spam Email Classifier is an AI-powered email security platform developed using Machine Learning and NLP techniques to detect spam and phishing emails.
+
+    The system supports both single email scanning and bulk email analysis through CSV uploads while maintaining threat logs and analytics dashboards.
+    """)
+
+    st.subheader("Technologies Used")
+
+    tech_data = pd.DataFrame({
+        "Technology": [
+            "Python",
+            "Streamlit",
+            "Scikit-learn",
+            "Pandas",
+            "Plotly",
+            "SQLite"
+        ],
+        "Purpose": [
+            "Core backend programming language",
+            "Frontend web application framework",
+            "Machine Learning model training",
+            "CSV and data processing",
+            "Interactive analytics charts",
+            "Threat log database management"
+        ],
+        "Version": [
+            "Python 3.13",
+            "Latest",
+            "Latest",
+            "Latest",
+            "Latest",
+            "SQLite3"
         ]
-
-        preview = (subject + " " + message).lower()
-
-        detected = []
-
-        for word in suspicious_keywords:
-            if word in preview:
-                detected.append(word)
-
-        if detected:
-            st.error(f"⚠️ Keywords Found: {', '.join(detected)}")
-        else:
-            st.success("✅ No suspicious keywords")
-
-        st.write("")
-
-        links = re.findall(r'https?://\\S+|www\\.\\S+', preview)
-
-        st.subheader("🔗 Link Analysis")
-
-        if links:
-            st.warning(f"⚠️ {len(links)} suspicious link(s) found")
-        else:
-            st.success("✅ No suspicious links")
-
-        st.write("")
-
-        st.subheader("📅 Scan Time")
-        st.write(datetime.now().strftime('%d-%m-%Y'))
-        st.write(datetime.now().strftime('%H:%M:%S'))
-
-    # AI Prediction
-    if analyze:
-
-        full_message = sender + " " + receiver + " " + subject + " " + message
-
-        if full_message.strip() == "":
-            st.warning("Please enter email details.")
-
-        else:
-
-            prediction = model.predict([full_message])[0]
-
-            probabilities = model.predict_proba([full_message])[0]
-
-            spam_probability = round(probabilities[1] * 100, 2)
-            safe_probability = round(probabilities[0] * 100, 2)
-
-            st.write("")
-
-            if spam_probability >= 80:
-                risk = "CRITICAL"
-            elif spam_probability >= 60:
-                risk = "HIGH"
-            elif spam_probability >= 40:
-                risk = "MEDIUM"
-            else:
-                risk = "LOW"
-
-            # Save logs
-            c.execute(
-                "INSERT INTO logs (sender, receiver, subject, threat_level, spam_probability, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
-                (
-                    sender,
-                    receiver,
-                    subject,
-                    risk,
-                    spam_probability,
-                    datetime.now().strftime('%d-%m-%Y %H:%M:%S')
-                )
-            )
-
-            conn.commit()
-
-            if prediction == 1:
-
-                st.markdown(
-                    f'<div class="high-risk">🚨 SPAM EMAIL DETECTED<br><br>Threat Score: {spam_probability}%<br>Risk Level: {risk}</div>',
-                    unsafe_allow_html=True
-                )
-
-            else:
-
-                st.markdown(
-                    f'<div class="safe-risk">✅ SAFE EMAIL DETECTED<br><br>Safety Score: {safe_probability}%</div>',
-                    unsafe_allow_html=True
-                )
-
-            st.write("")
-
-            st.subheader("🧠 AI Decision Analysis")
-
-            reasons = []
-
-            if detected:
-                reasons.append("Suspicious promotional language detected")
-
-            if links:
-                reasons.append("External links found in email")
-
-            if "urgent" in preview:
-                reasons.append("Urgency manipulation pattern identified")
-
-            if prediction == 1 and not reasons:
-                reasons.append("AI detected hidden spam-like patterns")
-
-            if reasons:
-                for reason in reasons:
-                    st.warning(f"⚠️ {reason}")
-            else:
-                st.success("✅ No major threat indicators")
-
-            st.write("")
-
-            st.subheader("📊 Threat Probability")
-
-            probability_data = pd.DataFrame({
-                'Category': ['Safe', 'Threat'],
-                'Probability': [safe_probability, spam_probability]
-            })
-
-            fig = px.bar(
-                probability_data,
-                x='Category',
-                y='Probability',
-                title='Threat Probability Analysis'
-            )
-
-            st.plotly_chart(fig, use_container_width=True)
-
-# ANALYTICS PAGE
-elif page == "📊 Analytics":
-
-    st.title("📊 Security Analytics Dashboard")
-
-    analytics_data = pd.DataFrame({
-        'Category': ['Safe', 'Spam'],
-        'Count': [48, 52]
     })
 
-    fig1 = px.pie(
-        analytics_data,
-        values='Count',
-        names='Category',
-        title='Overall Email Classification'
+    st.dataframe(
+        tech_data,
+        use_container_width=True
     )
 
-    st.plotly_chart(fig1, use_container_width=True)
+# =====================================
+# FOOTER
+# =====================================
 
-    trend_data = pd.DataFrame({
-        'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-        'Threats': [12, 19, 8, 25, 17]
-    })
-
-    fig2 = px.line(
-        trend_data,
-        x='Day',
-        y='Threats',
-        title='Weekly Threat Trend'
-    )
-
-    st.plotly_chart(fig2, use_container_width=True)
-
-# LOGS PAGE
-elif page == "📜 Threat Logs":
-
-    st.title("📜 Threat Detection Logs")
-
-    logs_df = pd.read_sql_query("SELECT * FROM logs ORDER BY id DESC", conn)
-
-    st.dataframe(logs_df, use_container_width=True)
-
-# ABOUT PAGE
-elif page == "ℹ️ About System":
-
-    st.title("ℹ️ About Spam Email Classifier")
-
-    st.write(
-        """
-        Spam Email Classifier is an AI-powered email security platform developed for detecting spam, phishing, and malicious email threats using Machine Learning and Natural Language Processing.
-
-        ### Core Features
-        - AI-based threat detection
-        - NLP-powered spam analysis
-        - Real-time threat monitoring
-        - Threat probability scoring
-        - Security analytics dashboard
-        - Threat log management
-        - Link & keyword analysis
-
-        ### Technologies Used
-        - Python
-        - Streamlit
-        - Scikit-learn
-        - TF-IDF Vectorization
-        - Naive Bayes Algorithm
-        - Plotly Analytics
-        - SQLite Database
-        """
-    )
-
-# Footer
-st.write("")
 st.markdown("---")
-st.caption("Spam Email Classifier | Powered by AI & NLP")
+
+st.markdown(
+    '<div class="footer">Spam Email Classifier | Powered by AI & NLP</div>',
+    unsafe_allow_html=True
+)
