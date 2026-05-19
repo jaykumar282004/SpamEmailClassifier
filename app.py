@@ -5,9 +5,9 @@ import plotly.express as px
 import sqlite3
 from datetime import datetime
 
-# =====================================
+# ==========================================
 # DATABASE
-# =====================================
+# ==========================================
 
 conn = sqlite3.connect("threat_logs.db", check_same_thread=False)
 c = conn.cursor()
@@ -24,15 +24,15 @@ CREATE TABLE IF NOT EXISTS logs (
 
 conn.commit()
 
-# =====================================
+# ==========================================
 # LOAD MODEL
-# =====================================
+# ==========================================
 
 model = pickle.load(open("spam_model.pkl", "rb"))
 
-# =====================================
+# ==========================================
 # PAGE CONFIG
-# =====================================
+# ==========================================
 
 st.set_page_config(
     page_title="Spam Email Classifier",
@@ -40,14 +40,14 @@ st.set_page_config(
     layout="wide"
 )
 
-# =====================================
-# PREMIUM LIGHT UI
-# =====================================
+# ==========================================
+# PREMIUM CYBER UI
+# ==========================================
 
 st.markdown("""
 <style>
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
@@ -56,124 +56,185 @@ html, body, [class*="css"] {
 /* MAIN APP */
 
 .stApp {
-    background-color: #f5f7fb;
-    color: #111827;
+    background: linear-gradient(135deg, #0f172a, #111827);
+    color: #f8fafc;
 }
 
 /* SIDEBAR */
 
 section[data-testid="stSidebar"] {
-    background-color: #ffffff;
-    border-right: 1px solid #e5e7eb;
+    background: #111827;
+    border-right: 1px solid #1f2937;
+    width: 340px !important;
 }
 
 /* SIDEBAR TEXT */
 
 section[data-testid="stSidebar"] * {
-    color: #111827 !important;
+    color: white !important;
+}
+
+/* SIDEBAR TITLE */
+
+section[data-testid="stSidebar"] h2 {
+    font-size: 32px !important;
+    font-weight: 800 !important;
+    margin-bottom: 10px !important;
+}
+
+/* ENTERPRISE TEXT */
+
+section[data-testid="stSidebar"] p {
+    font-size: 15px !important;
+    color: #94a3b8 !important;
+}
+
+/* NAVIGATION LABEL */
+
+.stRadio > label {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    margin-bottom: 15px !important;
+}
+
+/* RADIO GROUP */
+
+.stRadio div[role="radiogroup"] {
+    gap: 12px !important;
+}
+
+/* ALL NAVIGATION BOXES SAME SIZE */
+
+.stRadio div[role="radiogroup"] label {
+    background: rgba(255,255,255,0.05);
+    padding: 16px 20px !important;
+    border-radius: 14px;
+    min-height: 60px !important;
+    width: 100% !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    font-size: 18px !important;
+    font-weight: 600 !important;
+
+    transition: 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* HOVER EFFECT */
+
+.stRadio div[role="radiogroup"] label:hover {
+    background: rgba(59,130,246,0.18);
+    border-color: #3b82f6;
+    transform: translateX(4px);
+}
+
+/* SELECTED TAB */
+
+.stRadio div[role="radiogroup"] label[data-baseweb="radio"] {
+    background: rgba(37,99,235,0.22);
 }
 
 /* TITLES */
 
 .main-title {
-    font-size: 42px;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 5px;
+    font-size: 52px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 10px;
+    animation: fadeIn 1s ease;
 }
 
 .sub-title {
-    font-size: 16px;
-    color: #6b7280;
-    margin-bottom: 30px;
+    font-size: 18px;
+    color: #cbd5e1;
+    margin-bottom: 35px;
+    animation: fadeIn 1.5s ease;
 }
 
 /* CARDS */
 
 .card {
-    background-color: white;
-    border: 1px solid #e5e7eb;
-    padding: 22px;
-    border-radius: 14px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 24px;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    transition: 0.3s ease;
+    animation: slideUp 0.7s ease;
 }
 
-.card h2 {
-    color: #111827;
-    font-size: 28px;
-    margin-bottom: 5px;
+.card:hover {
+    transform: translateY(-5px);
+    border-color: #3b82f6;
 }
 
-.card p {
-    color: #6b7280;
-    font-size: 14px;
-}
-
-/* RESULT BOXES */
+/* RESULT BOX */
 
 .safe-box {
-    background-color: #ecfdf5;
+    background: rgba(16,185,129,0.15);
     border: 1px solid #10b981;
     padding: 25px;
-    border-radius: 12px;
-    color: #065f46;
-    font-size: 22px;
-    font-weight: 600;
+    border-radius: 16px;
+    color: #d1fae5;
+    font-size: 24px;
+    font-weight: 700;
+    animation: slideUp 0.5s ease;
 }
 
 .spam-box {
-    background-color: #fef2f2;
+    background: rgba(239,68,68,0.15);
     border: 1px solid #ef4444;
     padding: 25px;
-    border-radius: 12px;
-    color: #991b1b;
-    font-size: 22px;
-    font-weight: 600;
+    border-radius: 16px;
+    color: #fee2e2;
+    font-size: 24px;
+    font-weight: 700;
+    animation: slideUp 0.5s ease;
 }
 
-/* NORMAL BUTTONS */
+/* BUTTONS */
 
 div.stButton > button {
-    background-color: #2563eb;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: white !important;
     border: none;
-    border-radius: 10px;
-    padding: 12px;
-    font-weight: 500;
-    font-size: 15px;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    transition: 0.3s ease;
     width: 100%;
 }
 
 div.stButton > button:hover {
-    background-color: #1d4ed8;
+    transform: scale(1.02);
+    box-shadow: 0 0 18px rgba(37,99,235,0.4);
 }
 
 /* DOWNLOAD BUTTON */
 
 div.stDownloadButton > button {
-    background-color: white !important;
+    background: white !important;
     color: black !important;
-    border: 1px solid #d1d5db !important;
-    border-radius: 10px;
-    padding: 12px;
-    font-weight: 500;
-}
-
-div.stDownloadButton > button:hover {
-    background-color: #f3f4f6 !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    padding: 12px !important;
 }
 
 /* FILE UPLOADER */
 
 [data-testid="stFileUploader"] {
-    background-color: #111827 !important;
-    border: 2px dashed #374151 !important;
-    padding: 20px !important;
-    border-radius: 12px !important;
+    background: rgba(255,255,255,0.05);
+    border: none !important;
+    padding: 22px;
+    border-radius: 16px;
 }
 
-/* ALL TEXT INSIDE */
+/* FILE UPLOADER TEXT */
 
 [data-testid="stFileUploader"] * {
     color: white !important;
@@ -181,61 +242,97 @@ div.stDownloadButton > button:hover {
 
 /* ACTUAL BUTTON */
 
-[data-testid="stFileUploader"] section button,
 [data-testid="stFileUploader"] button {
     background: white !important;
     color: black !important;
-    border: 1px solid #d1d5db !important;
     border-radius: 10px !important;
-    font-weight: 600 !important;
-    padding: 10px 18px !important;
+    border: none !important;
+    font-weight: 700 !important;
 }
 
 /* BUTTON TEXT */
+
+[data-testid="stFileUploader"] button span {
+    color: black !important;
+}
+
+/* BUTTON PARAGRAPH */
 
 [data-testid="stFileUploader"] button p {
     color: black !important;
 }
 
-/* ICON */
+/* BUTTON ICON */
 
 [data-testid="stFileUploader"] button svg {
     fill: black !important;
 }
 
-/* INPUT LABELS */
-
-label {
-    color: #111827 !important;
-    font-weight: 500 !important;
-}
-
-/* INPUT BOXES */
+/* INPUTS */
 
 div[data-testid="stTextInput"] input {
-    background-color: white !important;
-    color: #111827 !important;
-    border: 1px solid #d1d5db !important;
+    background: rgba(255,255,255,0.05) !important;
+    color: white !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 10px !important;
 }
 
 div[data-testid="stTextArea"] textarea {
-    background-color: white !important;
-    color: #111827 !important;
-    border: 1px solid #d1d5db !important;
+    background: rgba(255,255,255,0.05) !important;
+    color: white !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 10px !important;
+}
+
+/* LABELS */
+
+label {
+    color: white !important;
 }
 
 /* TABLES */
 
 [data-testid="stDataFrame"] {
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+/* METRICS */
+
+[data-testid="metric-container"] {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 14px;
+}
+
+/* ANIMATIONS */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* FOOTER */
 
 .footer {
     text-align: center;
-    color: #6b7280;
+    color: #94a3b8;
     margin-top: 40px;
     font-size: 14px;
 }
@@ -243,9 +340,9 @@ div[data-testid="stTextArea"] textarea {
 </style>
 """, unsafe_allow_html=True)
 
-# =====================================
+# ==========================================
 # SIDEBAR
-# =====================================
+# ==========================================
 
 st.sidebar.markdown("## 📧 Spam Email Classifier")
 st.sidebar.caption("Enterprise AI Dashboard")
@@ -268,9 +365,9 @@ st.sidebar.metric("Model Accuracy", "96.23%")
 st.sidebar.metric("Threat Engine", "Active")
 st.sidebar.metric("Status", "Live")
 
-# =====================================
+# ==========================================
 # DASHBOARD
-# =====================================
+# ==========================================
 
 if page == "Dashboard":
 
@@ -280,29 +377,35 @@ if page == "Dashboard":
     )
 
     st.markdown(
-        '<div class="sub-title">AI-powered email spam detection system using Machine Learning and NLP</div>',
+        '<div class="sub-title">AI-powered spam detection system using Machine Learning and NLP</div>',
         unsafe_allow_html=True
     )
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown(
-            '<div class="card"><h2>96.23%</h2><p>Detection Accuracy</p></div>',
-            unsafe_allow_html=True
-        )
+        st.markdown("""
+        <div class="card">
+        <h2>96.23%</h2>
+        <p>Detection Accuracy</p>
+        </div>
+        """, unsafe_allow_html=True)
 
     with col2:
-        st.markdown(
-            '<div class="card"><h2>24/7</h2><p>Threat Monitoring</p></div>',
-            unsafe_allow_html=True
-        )
+        st.markdown("""
+        <div class="card">
+        <h2>24/7</h2>
+        <p>Threat Monitoring</p>
+        </div>
+        """, unsafe_allow_html=True)
 
     with col3:
-        st.markdown(
-            '<div class="card"><h2>AI + NLP</h2><p>Detection Engine</p></div>',
-            unsafe_allow_html=True
-        )
+        st.markdown("""
+        <div class="card">
+        <h2>AI + NLP</h2>
+        <p>Detection Engine</p>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.subheader("Recent Threat Activity")
 
@@ -315,17 +418,14 @@ if page == "Dashboard":
 
         recent_logs["Percentage"] = recent_logs["Percentage"].astype(str) + "%"
 
-        st.dataframe(
-            recent_logs,
-            use_container_width=True
-        )
+        st.dataframe(recent_logs, use_container_width=True)
 
     except:
         st.warning("No recent activity found.")
 
-# =====================================
+# ==========================================
 # SINGLE EMAIL SCANNER
-# =====================================
+# ==========================================
 
 elif page == "Single Email Scanner":
 
@@ -335,10 +435,7 @@ elif page == "Single Email Scanner":
 
     subject = st.text_input("Email Subject")
 
-    message = st.text_area(
-        "Email Content",
-        height=250
-    )
+    message = st.text_area("Email Content", height=250)
 
     analyze = st.button("Analyze Email")
 
@@ -370,28 +467,26 @@ elif page == "Single Email Scanner":
         if prediction == 1:
 
             st.markdown(
-                f'<div class="spam-box">Spam Email Detected<br><br>Threat Percentage: {spam_probability}%</div>',
+                f'<div class="spam-box">🚨 Spam Email Detected<br><br>Threat Percentage: {spam_probability}%</div>',
                 unsafe_allow_html=True
             )
 
         else:
 
             st.markdown(
-                f'<div class="safe-box">Safe Email Detected<br><br>Safety Percentage: {safe_probability}%</div>',
+                f'<div class="safe-box">✅ Safe Email Detected<br><br>Safety Percentage: {safe_probability}%</div>',
                 unsafe_allow_html=True
             )
 
-# =====================================
+# ==========================================
 # BULK EMAIL SCANNER
-# =====================================
+# ==========================================
 
 elif page == "Bulk Email Scanner":
 
     st.title("Bulk Email Scanner")
 
-    st.write(
-        "Upload CSV file to analyze multiple emails using AI."
-    )
+    st.write("Upload CSV file to analyze multiple emails using AI.")
 
     uploaded_csv = st.file_uploader(
         "Upload CSV File",
@@ -427,9 +522,7 @@ elif page == "Bulk Email Scanner":
 
             st.success(f"Using column: {email_column}")
 
-            analyze_bulk = st.button(
-                "Analyze Bulk Emails"
-            )
+            analyze_bulk = st.button("Analyze Bulk Emails")
 
             if analyze_bulk:
 
@@ -455,14 +548,8 @@ elif page == "Bulk Email Scanner":
 
                 st.dataframe(df, use_container_width=True)
 
-                spam_count = len(
-                    df[df["Prediction"] == "Spam"]
-                )
-
-                safe_count = len(
-                    df[df["Prediction"] == "Safe"]
-                )
-
+                spam_count = len(df[df["Prediction"] == "Spam"])
+                safe_count = len(df[df["Prediction"] == "Safe"])
                 total = len(df)
 
                 col1, col2, col3 = st.columns(3)
@@ -487,14 +574,9 @@ elif page == "Bulk Email Scanner":
                     names="Category"
                 )
 
-                st.plotly_chart(
-                    fig,
-                    use_container_width=True
-                )
+                st.plotly_chart(fig, use_container_width=True)
 
-                csv = df.to_csv(
-                    index=False
-                ).encode("utf-8")
+                csv = df.to_csv(index=False).encode("utf-8")
 
                 st.download_button(
                     label="Download Report",
@@ -523,9 +605,9 @@ elif page == "Bulk Email Scanner":
         except Exception as e:
             st.error(f"Error reading CSV: {e}")
 
-# =====================================
+# ==========================================
 # ANALYTICS
-# =====================================
+# ==========================================
 
 elif page == "Analytics":
 
@@ -568,9 +650,9 @@ elif page == "Analytics":
     with col2:
         st.metric("Safe Emails", safe_total)
 
-# =====================================
+# ==========================================
 # THREAT LOGS
-# =====================================
+# ==========================================
 
 elif page == "Threat Logs":
 
@@ -590,9 +672,9 @@ elif page == "Threat Logs":
     except:
         st.warning("No logs available.")
 
-# =====================================
-# ABOUT
-# =====================================
+# ==========================================
+# ABOUT SYSTEM
+# ==========================================
 
 elif page == "About System":
 
@@ -638,9 +720,9 @@ elif page == "About System":
         use_container_width=True
     )
 
-# =====================================
+# ==========================================
 # FOOTER
-# =====================================
+# ==========================================
 
 st.markdown("---")
 
